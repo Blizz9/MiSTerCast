@@ -28,8 +28,11 @@ namespace MiSTerCast
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         public delegate void CaptureImageDelegate(int width, int height, IntPtr buffer);
 
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        public delegate void InputStatusDelegate(UInt16 joystickFlags1, UInt16 joystickFlags2, IntPtr ps2Keys);
+
         [DllImport("MISTERCASTLIB.dll", EntryPoint = "Initialize", CallingConvention = CallingConvention.Cdecl)]
-        public static extern bool Initialize(LogDelegate logCallback, CaptureImageDelegate captureImageCallback);
+        public static extern bool Initialize(LogDelegate logCallback, CaptureImageDelegate captureImageCallback, InputStatusDelegate inputStatusCallback);
 
         [DllImport("MISTERCASTLIB.dll", EntryPoint = "Shutdown", CallingConvention = CallingConvention.Cdecl)]
         public static extern bool Shutdown();

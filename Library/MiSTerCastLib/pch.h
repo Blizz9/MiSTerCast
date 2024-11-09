@@ -11,6 +11,7 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define NOMINMAX
 #define no_init_all
+#define _CRT_SECURE_NO_WARNINGS
 
 #include <windows.h>
 #include <winsock2.h>

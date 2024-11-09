@@ -58,7 +58,9 @@ namespace MiSTerCast
                 LogDelegate = new MiSTerCastInterop.LogDelegate(LogCallback);
             if (CaptureImageDelegate == null)
                 CaptureImageDelegate = new MiSTerCastInterop.CaptureImageDelegate(CaptureImage);
-            isInitialized = MiSTerCastInterop.Initialize(LogDelegate, CaptureImageDelegate);
+            if (InputStatusDelegate == null)
+                InputStatusDelegate = new MiSTerCastInterop.InputStatusDelegate(InputStatusCallback);
+            isInitialized = MiSTerCastInterop.Initialize(LogDelegate, CaptureImageDelegate, InputStatusDelegate);
             if (isInitialized)
             {
                 OnModelineChanged();
@@ -730,5 +732,138 @@ namespace MiSTerCast
         }
 
         #endregion Preview
+
+        #region Inputs
+
+        private MiSTerCastInterop.InputStatusDelegate InputStatusDelegate;
+
+        private static List<InputInterop.ScanCodeShort> keysDownLastFrame = new List<InputInterop.ScanCodeShort>();
+
+        // this uses scancode sending as opposed virtual keys; virtual keys would likely generally work better,
+        // but it didn't seem to instantly work with RetroArch and I didn't want to dive in yet
+        private void InputStatusCallback(UInt16 joystickFlags1, UInt16 joystickFlags2, IntPtr keyboardFlagsPtr)
+        {
+            byte[] keyboardFlags = new byte[32];
+            Marshal.Copy(keyboardFlagsPtr, keyboardFlags, 0, 32);
+
+            // this is all hard-coded; it really needs a way to be defined by config
+            Dictionary<InputInterop.ScanCodeShort, bool> keysState = new Dictionary<InputInterop.ScanCodeShort, bool>();
+            keysState.Add(InputInterop.ScanCodeShort.LWIN, (keyboardFlags[0] & 1) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_A, (keyboardFlags[0] & 16) != 0 || (joystickFlags1 & 64) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_B, (keyboardFlags[0] & 32) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_C, (keyboardFlags[0] & 64) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_D, (keyboardFlags[0] & 128) != 0 || (joystickFlags1 & 1024) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_E, (keyboardFlags[1] & 1) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_F, (keyboardFlags[1] & 2) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_G, (keyboardFlags[1] & 4) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_H, (keyboardFlags[1] & 8) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_I, (keyboardFlags[1] & 16) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_J, (keyboardFlags[1] & 32) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_K, (keyboardFlags[1] & 64) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_L, (keyboardFlags[1] & 128) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_M, (keyboardFlags[2] & 1) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_N, (keyboardFlags[2] & 2) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_O, (keyboardFlags[2] & 4) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_P, (keyboardFlags[2] & 8) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_Q, (keyboardFlags[2] & 16) != 0 || (joystickFlags1 & 256) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_R, (keyboardFlags[2] & 32) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_S, (keyboardFlags[2] & 64) != 0 || (joystickFlags1 & 128) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_T, (keyboardFlags[2] & 128) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_U, (keyboardFlags[3] & 1) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_V, (keyboardFlags[3] & 2) != 0 || (joystickFlags1 & 2048) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_W, (keyboardFlags[3] & 4) != 0 || (joystickFlags1 & 512) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_X, (keyboardFlags[3] & 8) != 0 || (joystickFlags1 & 32) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_Y, (keyboardFlags[3] & 16) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_Z, (keyboardFlags[3] & 32) != 0 || (joystickFlags1 & 16) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_1, (keyboardFlags[3] & 64) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_2, (keyboardFlags[3] & 128) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_3, (keyboardFlags[4] & 1) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_4, (keyboardFlags[4] & 2) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_5, (keyboardFlags[4] & 4) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_6, (keyboardFlags[4] & 8) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_7, (keyboardFlags[4] & 16) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_8, (keyboardFlags[4] & 32) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_9, (keyboardFlags[4] & 64) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.KEY_0, (keyboardFlags[4] & 128) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.RETURN, (keyboardFlags[5] & 1) != 0 || (joystickFlags1 & 4096) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.ESCAPE, (keyboardFlags[5] & 2) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.BACK, (keyboardFlags[5] & 4) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.TAB, (keyboardFlags[5] & 8) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.SPACE, (keyboardFlags[5] & 16) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.OEM_MINUS, (keyboardFlags[5] & 32) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.OEM_PLUS, (keyboardFlags[5] & 64) != 0);
+            //keysState.Add(InputInterop.ScanCodeShort.BACKSLASH, (keyboardFlags[6] & 2) != 0);
+            //keysState.Add(InputInterop.ScanCodeShort.SEMICOLON, (keyboardFlags[6] & 8) != 0);
+            //keysState.Add(InputInterop.ScanCodeShort.BACKTICK, (keyboardFlags[6] & 16) != 0);
+            //keysState.Add(InputInterop.ScanCodeShort.TILDE, (keyboardFlags[6] & 32) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.OEM_COMMA, (keyboardFlags[6] & 64) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.OEM_PERIOD, (keyboardFlags[6] & 128) != 0);
+            //keysState.Add(InputInterop.ScanCodeShort.FORWARDSLASH, (keyboardFlags[7] & 1) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.CAPITAL, (keyboardFlags[7] & 2) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.F1, (keyboardFlags[7] & 4) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.F2, (keyboardFlags[7] & 8) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.F3, (keyboardFlags[7] & 16) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.F4, (keyboardFlags[7] & 32) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.F5, (keyboardFlags[7] & 64) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.F6, (keyboardFlags[7] & 128) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.F7, (keyboardFlags[8] & 1) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.F8, (keyboardFlags[8] & 2) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.F9, (keyboardFlags[8] & 4) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.F10, (keyboardFlags[8] & 8) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.F11, (keyboardFlags[8] & 16) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.F12, (keyboardFlags[8] & 32) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.HOME, (keyboardFlags[9] & 4) != 0);
+            //keysState.Add(InputInterop.ScanCodeShort.PAGEUP, (keyboardFlags[9] & 8) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.DELETE, (keyboardFlags[9] & 16) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.END, (keyboardFlags[9] & 32) != 0);
+            //keysState.Add(InputInterop.ScanCodeShort.PAGEDOWN, (keyboardFlags[9] & 64) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.RIGHT, (keyboardFlags[9] & 128) != 0 || (joystickFlags1 & 1) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.LEFT, (keyboardFlags[10] & 1) != 0 || (joystickFlags1 & 2) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.DOWN, (keyboardFlags[10] & 2) != 0 || (joystickFlags1 & 4) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.UP, (keyboardFlags[10] & 4) != 0 || (joystickFlags1 & 8) != 0);
+            //keysState.Add(InputInterop.ScanCodeShort.OPENBRACKET, (keyboardFlags[23] & 1) != 0);
+            //keysState.Add(InputInterop.ScanCodeShort.CLOSEBRACKET, (keyboardFlags[23] & 2) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.CONTROL, (keyboardFlags[28] & 1) != 0);
+            keysState.Add(InputInterop.ScanCodeShort.SHIFT, (keyboardFlags[28] & 2) != 0 || (joystickFlags1 & 8192) != 0);
+            //keysState.Add(InputInterop.ScanCodeShort.LEFTALT, (keyboardFlags[28] & 4) != 0);
+            //keysState.Add(InputInterop.ScanCodeShort.RIGHTALT, (keyboardFlags[28] & 64) != 0);
+
+            List<InputInterop.ScanCodeShort> keysDown = keysState.Where(k => k.Value).Select(k => k.Key).ToList();
+
+            // figure out which keys have been released since the last frame
+            List<InputInterop.ScanCodeShort> keysUp = new List<InputInterop.ScanCodeShort>();
+            foreach (InputInterop.ScanCodeShort keyDownLastFrame in keysDownLastFrame)
+            {
+                if (!keysDown.Contains(keyDownLastFrame))
+                    keysUp.Add(keyDownLastFrame);
+            }
+            keysDownLastFrame.Clear();
+
+            // build the raw scan code send data for keys down and up
+            List<InputInterop.INPUT> inputs = new List<InputInterop.INPUT>();
+            foreach (InputInterop.ScanCodeShort keyUp in keysUp)
+            {
+                InputInterop.INPUT input = new InputInterop.INPUT();
+                input.type = 1;
+                input.U.ki.wScan = keyUp;
+                input.U.ki.dwFlags = InputInterop.KEYEVENTF.SCANCODE | InputInterop.KEYEVENTF.KEYUP;
+                inputs.Add(input);
+            }
+            foreach (InputInterop.ScanCodeShort keyDown in keysDown)
+            {
+                keysDownLastFrame.Add(keyDown);
+
+                InputInterop.INPUT input = new InputInterop.INPUT();
+                input.type = 1;
+                input.U.ki.wScan = keyDown;
+                input.U.ki.dwFlags = InputInterop.KEYEVENTF.SCANCODE;
+                inputs.Add(input);
+            }
+
+            if (inputs.Any())
+                InputInterop.SendInput((uint)inputs.Count, inputs.ToArray(), InputInterop.INPUT.Size);
+        }
+
+        #endregion Inputs
     }
 }

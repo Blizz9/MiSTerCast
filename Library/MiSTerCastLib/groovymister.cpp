@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "groovymister.h"
+#include "MiSTerCastLib.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -26,6 +27,11 @@
 					printf(fmt, __VA_ARGS__);\
 								}\
 							} while (0)
+#define LOGUI(sev,fmt, ...) do {\
+                    char stringBuffer[500];\
+                    sprintf(stringBuffer, fmt, __VA_ARGS__);\
+                    LogMessage(stringBuffer);\
+                            } while (0)
 
 #define CMD_CLOSE 1
 #define CMD_INIT 2
@@ -205,6 +211,8 @@ const char* GroovyMister::getVersion()
 
 int GroovyMister::CmdInit(const char* misterHost, uint16_t misterPort, int lz4Frames, uint32_t soundRate, uint8_t soundChan, uint8_t rgbMode, uint16_t mtu)
 {
+	LOGUI(0, "CmdInit Entered", "");
+
 	m_isConnected = 0;
 	m_mtu = (!mtu) ? BUFFER_MTU : mtu - MTU_HEADER;
 
@@ -493,6 +501,8 @@ int GroovyMister::CmdInit(const char* misterHost, uint16_t misterPort, int lz4Fr
 
 void GroovyMister::CmdSwitchres(double pClock, uint16_t hActive, uint16_t hBegin, uint16_t hEnd, uint16_t hTotal, uint16_t vActive, uint16_t vBegin, uint16_t vEnd, uint16_t vTotal, uint8_t interlace)
 {
+	LOGUI(0, "CmdSwitchres Entered", "");
+
 	if (!m_isConnected)
 	  return;
 	  
@@ -850,20 +860,20 @@ void GroovyMister::BindInputs(const char* misterHost, uint16_t misterPort)
 		LOG(0, "[MiSTer][Inputs] Unable to load Winsock: %d\n", rc);
 	}
 	m_sockInputsFD = INVALID_SOCKET;
-	LOG(0, "[MiSTer][Inputs] Initialising socket %s...\n","");
+	LOGUI(0, "[MiSTer][Inputs] Initialising socket %s...\n","");
 	m_sockInputsFD = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (m_sockInputsFD == INVALID_SOCKET)
 	{
 		LOG(0,"[MiSTer][Inputs] Could not create socket : %lu", ::GetLastError());
 	}
-	LOG(0,"[MiSTer][Inputs] Setting socket async %s...\n","");
+	LOGUI(0,"[MiSTer][Inputs] Setting socket async %s...\n","");
 	u_long iMode=1;
 	rc = ioctlsocket(m_sockInputsFD, FIONBIO, &iMode);
 	if (rc < 0)
 	{
 		LOG(0,"[MiSTer][Inputs] set nonblock fail %d\n", rc);
 	}
-	LOG(0,"[MiSTer][Inputs] Binding port %s...\n","");
+	LOGUI(0,"[MiSTer][Inputs] Binding port %s...\n","");
 		sendto(m_sockInputsFD, m_bufferSend, 1, 0, (struct sockaddr *)&m_serverAddrInputs, sizeof(m_serverAddrInputs));
 
 #else

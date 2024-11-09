@@ -66,7 +66,9 @@ typedef void(__stdcall *log_function)(const char* message, bool error);
 
 typedef void(__stdcall *capture_image_function)(int width, int height, void* buffer);
 
-MISTERCASTLIB_API bool Initialize(log_function fnLog, capture_image_function fnCapture);
+typedef void(__stdcall* input_status_function)(UINT16 joystickFlags1, UINT16 joystickFlags2, UINT8 *ps2Keys1);
+
+MISTERCASTLIB_API bool Initialize(log_function fnLog, capture_image_function fnCapture, input_status_function fnInput);
 
 MISTERCASTLIB_API bool Shutdown();
 

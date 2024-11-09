@@ -34,6 +34,9 @@ inline double get_ms(uint64_t ticks) { return (double)ticks / TicksPerSecond() *
 // nogpu UDP server
 #define UDP_PORT 32100
 
+// nogpu inputs UDP server
+#define INPUTS_UDP_PORT 32101
+
 #pragma pack(1)
 
 typedef struct nogpu_modeline
@@ -303,6 +306,12 @@ void renderer_nogpu::draw()
         vsync_offset = 0;// window().machine().video().vsync_offset();
     }
 
+    // Unsure that this is the best ordering of the poll, but this is my best guess.
+    // This location allows the input processing to happen while the lengthy audio
+    //   and video processing is occurring, giving this the most time to complete
+    //   (and exhibit the lowest latency?).
+    groovyMister.PollInputs();
+
     // Capture and send audio
     if (source_config.audio)
     {
@@ -317,6 +326,9 @@ void renderer_nogpu::draw()
     // Blit now
     groovyMister.CmdBlit(m_frame, m_field, 0/*m_vsync_scanline*/, 15000, 0);
     groovyMister.WaitSync();
+
+    // Unsure that this is the best ordering of the status call
+    InputStatus(groovyMister.joyInputs.joy1, groovyMister.joyInputs.joy2, groovyMister.ps2Inputs.ps2Keys);
 
     time_blit = CurrentTicks();
     nogpu_register_frametime(time_entry - time_exit);
@@ -354,6 +366,9 @@ bool renderer_nogpu::nogpu_init()
 
     // Reset current mode
     m_current_mode = {};
+
+    // I played around a bit with the ordering of this, but this seems to work well
+    groovyMister.BindInputs(m_targetip.c_str(), INPUTS_UDP_PORT);
 
     int ret = groovyMister.CmdInit(m_targetip.c_str(), UDP_PORT, m_compression, audioSampleRate, 2, 0, 1500);
     if (ret == 0)

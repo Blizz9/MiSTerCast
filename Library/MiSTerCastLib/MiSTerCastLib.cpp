@@ -13,6 +13,13 @@ void LogMessage(std::string message, bool error)
         logFunction(message.c_str(), error);
 }
 
+input_status_function inputStatusFunction = nullptr;
+void InputStatus(UINT16 joystickFlags1, UINT16 joystickFlags2, UINT8 *ps2Keys1)
+{
+    if (inputStatusFunction != nullptr)
+        inputStatusFunction(joystickFlags1, joystickFlags2, ps2Keys1);
+}
+
 std::atomic_bool stopCapture = false;
 std::atomic_bool stopStream = false;
 std::string targetIpString;
@@ -70,7 +77,7 @@ void cast_screen()
 
 bool initialized = false;
 std::unique_ptr<std::thread> captureScreenTask;
-MISTERCASTLIB_API bool Initialize(log_function fnLog, capture_image_function fnCapture)
+MISTERCASTLIB_API bool Initialize(log_function fnLog, capture_image_function fnCapture, input_status_function fnInput)
 {
     if (initialized)
     {
@@ -79,6 +86,7 @@ MISTERCASTLIB_API bool Initialize(log_function fnLog, capture_image_function fnC
     }
 
     logFunction = fnLog;
+    inputStatusFunction = fnInput;
     LogMessage("Initializing MiSTerCast");
 
     source_config.syncrefresh = true;
